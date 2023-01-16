@@ -1,0 +1,247 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style type="text/css">
+      video {
+        background-color: #ddd;
+        border-radius: 7px;
+        margin: 10px 0px 0px 10px;
+        width: 320px;
+        height: 240px;
+      }
+
+      button {
+        margin: 5px 0px 0px 10px !important;
+        width: 654px;
+      }
+    </style>
+  </head>
+
+  <body onload="syncShowMyFace()">
+    <video id="yourVideo" autoplay muted></video>
+    <video id="friendsVideo" autoplay></video>
+    <br />
+
+    <button id="call" type="button" class="btn btn-primary btn-lg">
+      <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Call
+    </button>
+    <br />
+
+    <button id="pause" type="button" class="btn btn-primary btn-lg">
+      <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Pause
+    </button>
+    <br />
+
+    <button id="resume" type="button" class="btn btn-primary btn-lg">
+      <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Resume
+    </button>
+
+    <script src="https://unpkg.com/colyseus.js@^0.14.0/dist/colyseus.js"></script>
+    <!-- <script src="./colyseus.js"></script> -->
+    <script>
+      var friendId = ''
+      var yourVideo = document.getElementById('yourVideo')
+      var friendsVideo = document.getElementById('friendsVideo')
+
+      const iceConfiguration = {
+        iceServers: [
+          { urls: 'stun:stun.services.mozilla.com' },
+          { urls: 'stun:stun.l.google.com:19302' },
+          {
+            urls: 'turn:localhost:3478',
+            username: 'vrgDev',
+            credential: 'mirabo@2050',
+          },
+        ],
+      }
+      var publishPeerConnection = new RTCPeerConnection(iceConfiguration)
+      var subscribePeerConnection = new RTCPeerConnection(iceConfiguration)
+
+      function syncShowMyFace() {
+        console.log('show my face')
+        setTimeout(() => {
+          ;(async () => await showMyFace())()
+        }, 2000)
+      }
+
+      async function showMyFace() {
+        console.log('Request userMedia to show my face...')
+        let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+        yourVideo.srcObject = stream
+        publishPeerConnection.addStream(stream)
+      }
+
+      ;(async () => {
+        await main()
+      })()
+
+      function makeid(length) {
+        var result = ''
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        var charactersLength = characters.length
+        for (var i = 0; i < length; i++) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength))
+        }
+        return result
+      }
+
+      function getRequetParam(param) {
+        const url = new URL(window.location.href)
+        const paramValue = url.searchParams.get(param)
+        return paramValue
+      }
+
+      function getColyseusUrl() {
+        const url = window.location.href
+        const hostname = url.split('/')[2]
+        if (url.startsWith('https')) {
+          return `wss://${hostname}`
+        }
+        return `ws://${hostname}`
+      }
+
+      async function main() {
+        const url = getColyseusUrl()
+        console.log('colyseus url', url)
+        var client = new Colyseus.Client(url)
+
+        try {
+          const username = makeid(8)
+          let roomName = getRequetParam('room')
+          if (!roomName) {
+            roomName = 'vrg'
+          }
+          console.log(`Joining to room ${roomName}...`)
+
+          var room = await client.joinOrCreate(roomName, {
+            username: username,
+            lang: 'en',
+          })
+          var yourId = room.sessionId
+          console.log(yourId, 'joined', room.name)
+        } catch (err) {
+          console.log('Could not join!', err)
+        }
+
+        // var publishPeerConnection = new RTCPeerConnection(servers);
+        publishPeerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            // console.log('[publisher] onIceCandidate: ' + JSON.stringify(event.candidate));
+            setTimeout(sendMessage('WEBRTC_ICE_UPDATE', { publisherId: yourId, ice: event.candidate }), 5000)
+          } else {
+            console.log('[publisher] Sent All Ice')
+          }
+        }
+
+        // var subscribePeerConnection = new RTCPeerConnection(servers);
+        subscribePeerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            // console.log('[subscriber] onIceCandidate: ' + JSON.stringify(event.candidate));
+            setTimeout(sendMessage('WEBRTC_ICE_UPDATE', { publisherId: friendId, ice: event.candidate }), 5000)
+          } else {
+            console.log('[subscriber] Sent All Ice')
+          }
+        }
+        subscribePeerConnection.onaddstream = event => (friendsVideo.srcObject = event.stream)
+
+        const sendMessage = (command, data) => {
+          // console.log(`Send message ${command}: ${JSON.stringify(data)}`);
+          room.send(command, data)
+        }
+
+        const onNewPublisher = async ({ publisherId }) => {
+          friendId = publisherId
+          console.log('New publisher: ' + friendId)
+          sendMessage('WEBRTC_SUBSCRIBE', { publisherId: friendId })
+        }
+
+        const onSdpAnswer = async ({ sdp }) => {
+          try {
+            console.log('sdp answer', sdp)
+            await publishPeerConnection.setRemoteDescription(new RTCSessionDescription(sdp))
+          } catch (err) {
+            console.log('Handle answer >> setRemoteDescription failed: ' + err.message)
+          }
+        }
+
+        const onIceUpdate = async ({ publisherId, ice }) => {
+          try {
+            if (publisherId == yourId) {
+              console.log('Add publisher ICE candiate: ' + JSON.stringify(ice))
+              await publishPeerConnection.addIceCandidate(new RTCIceCandidate(ice))
+            } else {
+              console.log('Add subsciber ICE candidate', JSON.stringify(ice))
+              await subscribePeerConnection.addIceCandidate(new RTCIceCandidate(ice))
+            }
+          } catch (err) {
+            console.log('addIceCandidate failed: ' + err.message)
+          }
+        }
+
+        const onSdpOffer = async ({ publisherId, sdp }) => {
+          try {
+            await subscribePeerConnection.setRemoteDescription(new RTCSessionDescription(sdp))
+            let answer = await subscribePeerConnection.createAnswer()
+            await subscribePeerConnection.setLocalDescription(answer)
+
+            sendMessage('WEBRTC_SDP_ANSWER', {
+              sdp: subscribePeerConnection.localDescription,
+              publisherId: friendId,
+            })
+          } catch (err) {
+            console.log('Handler offer >> setRemoteDescription failed: ' + err.message)
+          }
+        }
+
+        function syncShowFriendsFace() {
+          ;(async () => await showFriendsFace())()
+        }
+
+        async function showFriendsFace() {
+          try {
+            let offer = await publishPeerConnection.createOffer()
+            await publishPeerConnection.setLocalDescription(offer)
+            // console.log('offer sdp', publishPeerConnection.localDescription.sdp)
+            sendMessage('WEBRTC_PUBLISH', { sdp: publishPeerConnection.localDescription })
+          } catch (err) {
+            console.error(`Show friends face error: ${err.message}`)
+          }
+        }
+
+        function pauseStream() {
+          sendMessage('WEBRTC_PAUSE_STREAM', { publisherId: friendId })
+        }
+
+        function resumeStream() {
+          sendMessage('WEBRTC_RESUME_STREAM', { publisherId: friendId })
+        }
+
+        room.onMessage('WEBRTC_SDP_ANSWER', onSdpAnswer)
+        room.onMessage('WEBRTC_NEW_PUBLISHER', onNewPublisher)
+        room.onMessage('WEBRTC_SDP_OFFER', onSdpOffer)
+        room.onMessage('WEBRTC_ICE_UPDATE', onIceUpdate)
+        room.onMessage('WEBRTC_PUBLISHER_CLOSED', message => {
+          console.log('WEBRTC_PUBLISHER_CLOSED', JSON.stringify(message))
+        })
+
+        room.onMessage('on-joined', message => console.log('on-joined', JSON.stringify(message)))
+        room.onMessage('return-auth', message => console.log('return-auth', JSON.stringify(message)))
+        room.onMessage('CLIENT_JOINED', message => console.log('CLIENT_JOINED', message))
+        room.onMessage('CLIENT_LEAVE', message => console.log('CLIENT_LEAVE', message))
+
+        room.onError((code, message) => {
+          console.log(client.id, "couldn't join", room.name)
+        })
+
+        document.getElementById('call').onclick = syncShowFriendsFace
+        document.getElementById('pause').onclick = pauseStream
+        document.getElementById('resume').onclick = resumeStream
+      }
+    </script>
+  </body>
+</html>

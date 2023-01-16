@@ -1,0 +1,66 @@
+<html>
+
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta content="utf-8" http-equiv="encoding" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI="
+    crossorigin="anonymous"></script>
+
+  <style type="text/css">
+    button {
+      margin: 5px 0px 0px 10px !important;
+      width: 100px;
+    }
+  </style>
+</head>
+
+<body>
+  <div style="display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; width: 400px; height: 200px; margin: 0 auto;">
+    <form>
+      <label>Username: </label><br/>
+      <input id="username" type="text" placeholder="Enter Username" name="username" required><br/>
+      <label>Password: </label><br/>
+      <input id="password" type="password" placeholder="Enter Password" name="password" required><br/>
+      <button id="submitBtn" type="submit">Login</button>
+    </form>
+  </div>
+  <script>
+    const form = {
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      submit: document.querySelector("#submitBtn"),
+    };
+    let button = form.submit.addEventListener("click", (e) => {
+      e.preventDefault();
+      const login = "http://dev-proxy.gld-lab.link:6789/api/users/login";
+
+      fetch(login, {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: form.username.value,
+          password: form.password.value,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            alert("Error Password or Username"); /*displays error message*/
+          } else {
+            localStorage.clear()
+            localStorage.setItem('user_token', data.accessToken)
+            window.location.replace("./video-room.html");
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+  </script>
+</body>
+
+</html>
