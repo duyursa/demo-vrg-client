@@ -6,6 +6,7 @@
   "homepage": "https://duyursa.github.io/demo-vrg-client/",
   "scripts": {
     "build": "tsc",
+    "postbuild": "rsync -avum --include='*.html' './src/public' './dist/public'",
     "start": "ts-node src/index.ts",
     "start:dev": "ts-node-dev --watch \"src/**/*\" --respawn --transpile-only src/index.ts ",
     "start:prod": "node dist/index.js",
