@@ -13,7 +13,7 @@ const monitor_1 = require("@colyseus/monitor");
 const cors_1 = __importDefault(require("cors"));
 const VRGServer_1 = require("./VRGServer");
 const app = (0, express_1.default)();
-app.use(express_1.default.static('public'));
+app.use(express_1.default.static('src/public'));
 app.use((0, cors_1.default)());
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
