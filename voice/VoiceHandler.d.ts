@@ -1,0 +1,43 @@
+/// <reference types="node" />
+import { Client } from '@mirabo-tech/colyseus_core';
+import { IncomingMessage } from 'http';
+import { AuthUser } from '../auth/IAuthor';
+import { VRGRoom } from '../core/room';
+import { IceUpdate, Sdp, StateCamMic, StreamInfo } from './types';
+import { VoiceEventObserver } from './VoiceEventObserver';
+export declare class VoiceHandler {
+    private readonly logger;
+    private readonly room;
+    private readonly janusClient;
+    private janusSession;
+    private videoRoomHandle;
+    private janusRoomId;
+    private publishers;
+    private listeners;
+    private eventObservers;
+    constructor(room: VRGRoom);
+    onClientAuth(client: Client, options: any, request: IncomingMessage): Promise<AuthUser>;
+    onClientJoin(client: Client, options: any): Promise<void>;
+    onClientLeave(client: Client, consented: boolean): Promise<void>;
+    onRoomDispose(): Promise<void>;
+    initSession(): Promise<void>;
+    createRoom(): Promise<void>;
+    handlePublish(client: Client, offerSdp: Sdp): Promise<void>;
+    handleSubscribe(client: Client, { publisherId }: StreamInfo): Promise<void>;
+    private parseIceCandidateFromSdp;
+    handleUpdateIce(client: Client, iceUpdate: IceUpdate): Promise<void>;
+    handleSdpAnswer(client: Client, answerSdp: Sdp): Promise<void>;
+    handlePauseStream(client: Client, { publisherId }: StreamInfo): Promise<void>;
+    handleResumeStream(client: Client, { publisherId }: StreamInfo): Promise<void>;
+    addEventObserver(observer: VoiceEventObserver): void;
+    private pauseStream;
+    private resumeStream;
+    private sendNewPublisherSignalBroadcast;
+    private sendNewPublisherSignal;
+    private sendPublisherLeaveSignalBroadcast;
+    private sendSdpOfferSignal;
+    private sendSdpAnswerSignal;
+    private sendIceUpdateSignal;
+    updateStateCamMic(client: Client, stateCamMic: StateCamMic): void;
+    getStateCamMicPublishers(client: Client): void;
+}

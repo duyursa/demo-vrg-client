@@ -1,0 +1,11 @@
+export declare const WEBRTC_PUBLISH = "WEBRTC_PUBLISH";
+export declare const WEBRTC_SUBSCRIBE = "WEBRTC_SUBSCRIBE";
+export declare const WEBRTC_SDP_OFFER = "WEBRTC_SDP_OFFER";
+export declare const WEBRTC_SDP_ANSWER = "WEBRTC_SDP_ANSWER";
+export declare const WEBRTC_ICE_UPDATE = "WEBRTC_ICE_UPDATE";
+export declare const WEBRTC_NEW_PUBLISHER = "WEBRTC_NEW_PUBLISHER";
+export declare const WEBRTC_PUBLISHER_CLOSED = "WEBRTC_PUBLISHER_CLOSED";
+export declare const WEBRTC_PAUSE_STREAM = "WEBRTC_PAUSE_STREAM";
+export declare const WEBRTC_RESUME_STREAM = "WEBRTC_RESUME_STREAM";
+export declare const UPDATE_STATE_CAM_MIC = "UPDATE_STATE_CAM_MIC";
+export declare const GET_STATE_CAM_MIC = "GET_STATE_CAM_MIC";
