@@ -134,7 +134,7 @@
 
       document.querySelector('#createRoomBtn').addEventListener('click', (e) => {
         e.preventDefault();
-        const urlCreateRoom = 'http://dev-proxy.gld-lab.link:6789/api/rooms'
+        const urlCreateRoom = 'https://dev-proxy.gld-lab.link:6789/api/rooms'
         fetch(urlCreateRoom, {
           method: 'POST',
           headers: {
@@ -163,7 +163,7 @@
 
 
       document.querySelector('#showRoomBtn').addEventListener('click', (e) => {
-        const urlListRoom = 'http://dev-proxy.gld-lab.link:6789/api/rooms'
+        const urlListRoom = 'https://dev-proxy.gld-lab.link:6789/api/rooms'
         fetch(urlListRoom, {
           method: 'GET',
           headers: {
@@ -233,7 +233,7 @@
       }
 
       async function getVisitorData(payload) {
-        const visitor = `http://dev-proxy.gld-lab.link:6789/api/visitors/${payload.id}`;
+        const visitor = `https://dev-proxy.gld-lab.link:6789/api/visitors/${payload.id}`;
         const res = await fetch(visitor, {
           method: 'GET',
           headers: {
