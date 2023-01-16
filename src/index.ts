@@ -10,7 +10,7 @@ import cors from 'cors'
 import { VRGServer } from './VRGServer'
 
 const app = express()
-app.use(express.static('src/public'))
+app.use(express.static('public'))
 app.use(cors())
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*')
