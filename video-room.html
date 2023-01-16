@@ -185,10 +185,10 @@
               const joinBtns = document.querySelectorAll('#joinRoomBtn')
               joinBtns.forEach((joinBtn) => {
                 joinBtn.addEventListener('click', async (e) => {
-                  const roomId = e.path[1].querySelector('.vrg-room').innerHTML;
+                  // const roomId = e.path[1].querySelector('.vrg-room').innerHTML;
                   const clientOptions = {
                     ...visitor,
-                    roomName: `Room-${roomId}`,
+                    roomName: `Room-1`,
                     roomPassword: "2209",
                     userToken: userToken,
                   }
